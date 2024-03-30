@@ -1,0 +1,7 @@
+version: '3'
+
+services:
+  user:
+    image: python:3.9
+    ports:
+      - '8000:8000'
