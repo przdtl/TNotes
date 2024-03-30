@@ -19,8 +19,7 @@ services:
   app:
     build: .
     container_name: TNotesApp
-    volumes:
-      - ./src:/app/src
+    restart: always
     depends_on:
       db:
         condition: service_healthy
