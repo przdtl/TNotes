@@ -1,7 +1,13 @@
 version: '3'
 
 services:
-  user:
-    image: python:3.9
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env.db
     ports:
-      - '8000:8000'
+      - '5555:5432'
+volumes:
+  postgres_data:
