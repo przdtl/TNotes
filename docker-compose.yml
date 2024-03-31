@@ -26,5 +26,8 @@ services:
     links:
       - db
 
+    volumes:
+      - ./migrations:/app/migrations
+
 volumes:
   postgres_data:

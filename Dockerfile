@@ -2,7 +2,7 @@ FROM python:3.10
 
 WORKDIR /app
 
-ENV PYTHONPATH="$PYTHONPATH:/app"
+ENV PYTHONPATH="/app"
 
 # copy and install requirements modules
 COPY ./requirements.txt .
