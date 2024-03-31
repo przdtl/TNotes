@@ -6,8 +6,6 @@ services:
     container_name: TNotesPostgreSQL
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    env_file:
-      - .env.db
     ports:
       - '5555:5432'
     healthcheck:
@@ -15,6 +13,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: always
+    environment:
+      - POSTGRES_DB=tnotes_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=111
 
   app:
     build: .
@@ -25,9 +28,18 @@ services:
         condition: service_healthy
     links:
       - db
-
     volumes:
       - ./migrations:/app/migrations
 
+  redis_db:
+    image: redis:6.2-alpine
+    container_name: TNotesRedis
+    restart: always
+    ports:
+      - '6666:6379'
+    environment:
+      - REDIS_PASSWORD=222
+      - REDIS_PORT=6379
+      - REDIS_DATABASES=tnotes_cache
 volumes:
   postgres_data:
