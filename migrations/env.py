@@ -11,8 +11,8 @@ from src.config import settings
 from src.database import Base
 
 # importing models to create migrations
-from src.models.user import User
-from src.models.tree_menu import Menu, MenuPoint
+from src.user.models import User
+from src.notes.models import Vault, VaultPoint
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

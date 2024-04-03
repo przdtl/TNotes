@@ -26,10 +26,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis_db:
+        condition: service_started
     links:
       - db
     volumes:
       - ./migrations:/app/migrations
+      - ./src:/app/src
 
   redis_db:
     image: redis:6.2-alpine
@@ -41,5 +44,14 @@ services:
       - REDIS_PASSWORD=222
       - REDIS_PORT=6379
       - REDIS_DATABASES=tnotes_cache
+
+  adminer:
+    image: adminer
+    container_name: TNotesAdminer
+    restart: always
+    ports:
+      - '8080:8080'
+
+
 volumes:
   postgres_data:
