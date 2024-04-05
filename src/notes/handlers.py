@@ -36,7 +36,7 @@ async def create_new_vault_handler(message: Message, state: FSMContext):
     await VaultService(VaultRepository).list_vaults(message, state)
 
 
-#
+# Удаление тома по его имени
 @router.message(
     StateFilter(NoteStates.delete_vault),
 )

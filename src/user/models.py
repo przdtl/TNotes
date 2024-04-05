@@ -13,4 +13,4 @@ class User(Base):
     telegram_chat_id: Mapped[int]
     telegram_user_id: Mapped[int]
 
-    vaults = relationship('Vault', back_populates='user')
+    vaults = relationship('Vault', back_populates='user', passive_deletes=True)

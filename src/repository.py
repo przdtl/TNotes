@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from sqlalchemy import select, insert
+from sqlalchemy import select, insert, func
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
 from src.database import async_session_maker
@@ -13,6 +13,9 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     async def get_all(self, **kwargs):
+        raise NotImplementedError
+
+    async def get_count(self):
         raise NotImplementedError
 
     async def insert(self, **data):
@@ -29,9 +32,9 @@ class SQLAlchemyRepository(AbstractRepository):
 
     async def get(self, **kwargs):
         result = await self.get_all(**kwargs)
+        result = result.all()
         if not result:
             raise NoResultFound
-        result = result.all()
         if len(result) > 1:
             raise MultipleResultsFound
         return result[0]
@@ -40,6 +43,10 @@ class SQLAlchemyRepository(AbstractRepository):
         async with async_session_maker() as session:
             result = await session.scalars(select(self.model).filter_by(**kwargs))
             return result
+
+    async def get_count(self):
+        async with async_session_maker() as session:
+            return len((await session.scalars(select(self.model))).all())
 
     async def insert(self, **data):
         async with async_session_maker() as session:

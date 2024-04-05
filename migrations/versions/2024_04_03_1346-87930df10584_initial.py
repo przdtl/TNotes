@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 4d00f029c73e
+Revision ID: 87930df10584
 Revises: 
-Create Date: 2024-04-02 16:02:20.234025
+Create Date: 2024-04-03 13:46:49.645773
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '4d00f029c73e'
+revision: str = '87930df10584'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -29,20 +29,20 @@ def upgrade() -> None:
     op.create_table('vault',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
-    sa.Column('user_id', sa.UUID(), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.UniqueConstraint('name', 'user_id', name='user_vault_name_constraint')
     )
     op.create_table('vault_point',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
+    sa.Column('vault_id', sa.UUID(), nullable=False),
+    sa.Column('parent_id', sa.UUID(), nullable=True),
     sa.Column('message_id', sa.Integer(), nullable=True),
     sa.Column('point_type', sa.Enum('FOLDER', 'NOTE', name='pointtype'), nullable=False),
-    sa.Column('vault_id', sa.UUID(), nullable=True),
-    sa.Column('parent_id', sa.UUID(), nullable=True),
-    sa.ForeignKeyConstraint(['parent_id'], ['vault_point.id'], ),
-    sa.ForeignKeyConstraint(['vault_id'], ['vault.id'], ),
+    sa.ForeignKeyConstraint(['parent_id'], ['vault_point.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['vault_id'], ['vault.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name', 'vault_id', name='vault_point_name_constraint')
     )

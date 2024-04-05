@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
 from src.base.keyboards import base_keyboards
-from src.notes.callback_filters import VaultsListVaultCallback
+from src.notes.callback_filters import VaultsListVaultCallback, VaultsListPageCallback
 from src.notes.enums import NoteCallbackHandlers
 from src.notes.repository import VaultRepository
 from src.notes.service import VaultService
@@ -63,13 +63,46 @@ async def go_back_from_create_vault_callback_query(callback_query: CallbackQuery
     await callback_query.answer()
 
 
+# Переход по страницам в списке томов
+@router.callback_query(
+    VaultsListPageCallback.filter(),
+    StateFilter(NoteStates.list_vaults),
+)
+async def vaults_list_go_to_specific_page_callback_query(
+        callback_query: CallbackQuery,
+        callback_data: VaultsListPageCallback,
+        state: FSMContext,
+):
+    page = callback_data.page
+    size = callback_data.size
+    if callback_data.is_next:
+        total_count = await VaultService(VaultRepository).get_rows_count()
+        if ((page + 1) * size) - size >= total_count:
+            await callback_query.answer(text='Вы уже находитесь на последней странице!', show_alert=True)
+            return
+        await VaultService(VaultRepository).list_vaults(callback_query.message, state,
+                                                        is_wo_user_id=True,
+                                                        page_number=page + 1,
+                                                        page_size=size)
+        await callback_query.message.delete()
+    else:
+        if page == 1:
+            await callback_query.answer(text='Вы уже находитесь на первой странице!', show_alert=True)
+            return
+        await VaultService(VaultRepository).list_vaults(callback_query.message, state,
+                                                        is_wo_user_id=True,
+                                                        page_number=page - 1,
+                                                        page_size=size)
+        await callback_query.message.delete()
+
+
 # Обработчик нажатия на определённый том в списке томов
 @router.callback_query(
     VaultsListVaultCallback.filter(),
     StateFilter(NoteStates.list_vaults),
 )
-async def vaults_list_vault_callback_query(callback_query: CallbackQuery,
-                                           callback_data: VaultsListVaultCallback,
-                                           state: FSMContext):
+async def vaults_list_vault_callback_query(
+        callback_query: CallbackQuery,
+        callback_data: VaultsListVaultCallback, ):
     await callback_query.answer(f'{callback_data.vault_uuid_id=}\n'
                                 f'{callback_query.data=}', show_alert=True)
