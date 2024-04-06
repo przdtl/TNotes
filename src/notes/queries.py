@@ -13,6 +13,15 @@ from src.states import BaseStates, NoteStates
 router = Router()
 
 
+# Выводит список томов
+@router.callback_query(
+    F.data == NoteCallbackHandlers.VAULTS_LIST,
+    StateFilter(BaseStates.start_state),
+)
+async def view_vaults_list_callback_query(callback_query: CallbackQuery, state: FSMContext):
+    await VaultService(VaultRepository).list_vaults(callback_query.message, state)
+
+
 # Возврат на главную страницу с списка томов
 @router.callback_query(
     F.data == NoteCallbackHandlers.GO_HOME_FROM_VAULTS_LIST,
@@ -20,8 +29,8 @@ router = Router()
 )
 async def go_home_from_vaults_list_callback_query(callback_query: CallbackQuery, state: FSMContext):
     await state.set_state(BaseStates.start_state)
-    await callback_query.message.answer(text='Вы вернулись на главное меню',
-                                        reply_markup=base_keyboards.main_menu_keyboard())
+    await callback_query.message.edit_text(text='Вы вернулись на главное меню',
+                                           reply_markup=base_keyboards.main_menu_keyboard())
     await callback_query.answer()
 
 
@@ -59,7 +68,7 @@ async def delete_vault_callback_query(callback_query: CallbackQuery,
     StateFilter(NoteStates.create_vault, NoteStates.delete_vault),
 )
 async def go_back_from_create_vault_callback_query(callback_query: CallbackQuery, state: FSMContext):
-    await VaultService(VaultRepository).list_vaults(callback_query.message, state, is_wo_user_id=True)
+    await VaultService(VaultRepository).list_vaults(callback_query.message, state)
     await callback_query.answer()
 
 
@@ -78,22 +87,19 @@ async def vaults_list_go_to_specific_page_callback_query(
     if callback_data.is_next:
         total_count = await VaultService(VaultRepository).get_rows_count()
         if ((page + 1) * size) - size >= total_count:
-            await callback_query.answer(text='Вы уже находитесь на последней странице!', show_alert=True)
+            await callback_query.answer(text='Вы уже находитесь на последней странице!')
             return
-        await VaultService(VaultRepository).list_vaults(callback_query.message, state,
-                                                        is_wo_user_id=True,
-                                                        page_number=page + 1,
-                                                        page_size=size)
-        await callback_query.message.delete()
+        new_page_number = page + 1
+
     else:
         if page == 1:
-            await callback_query.answer(text='Вы уже находитесь на первой странице!', show_alert=True)
+            await callback_query.answer(text='Вы уже находитесь на первой странице!')
             return
-        await VaultService(VaultRepository).list_vaults(callback_query.message, state,
-                                                        is_wo_user_id=True,
-                                                        page_number=page - 1,
-                                                        page_size=size)
-        await callback_query.message.delete()
+        new_page_number = page - 1
+
+    await VaultService(VaultRepository).list_vaults(callback_query.message, state,
+                                                    page_number=new_page_number,
+                                                    page_size=size)
 
 
 # Обработчик нажатия на определённый том в списке томов

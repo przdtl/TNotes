@@ -14,7 +14,7 @@ router = Router()
 
 @router.message(CommandStart())
 async def command_start_handler(message: Message, state: FSMContext) -> None:
-    user = await UserService(UserRepository).get_or_create_user(user_id=message.from_user.id, chat_id=message.chat.id)
+    user = await UserService(UserRepository).get_or_create_user(chat_id=message.chat.id)
     await message.answer(f"Hello, {hbold(message.from_user.full_name)}!",
                          reply_markup=base_keyboards.main_menu_keyboard())
     await state.set_state(BaseStates.start_state)

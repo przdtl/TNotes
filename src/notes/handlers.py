@@ -15,25 +15,15 @@ router = Router()
 router.include_router(queries_router)
 
 
-# Выводит список томов
-@router.message(
-    F.text == NoteHandlers.VAULTS_LIST,
-    StateFilter(BaseStates.start_state)
-)
-async def view_vaults_list_handler(message: Message, state: FSMContext):
-    await VaultService(VaultRepository).list_vaults(message, state)
-
-
 # Создаёт новый том
 @router.message(
     StateFilter(NoteStates.create_vault),
 )
 async def create_new_vault_handler(message: Message, state: FSMContext):
-    new_vault = await VaultService(VaultRepository).create_new_vault(user_id=message.from_user.id,
-                                                                     chat_id=message.chat.id,
+    new_vault = await VaultService(VaultRepository).create_new_vault(chat_id=message.chat.id,
                                                                      vault_name=message.text)
     await message.answer(f'Был создан новый том с названием "{new_vault.name}"!')
-    await VaultService(VaultRepository).list_vaults(message, state)
+    await VaultService(VaultRepository).list_vaults(message, state, edit_instead_of_new=False)
 
 
 # Удаление тома по его имени

@@ -1,7 +1,7 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.base.enums import BaseHandlers
-from src.notes.enums import NoteHandlers
+from src.notes.enums import NoteHandlers, NoteCallbackHandlers
 
 
 class BaseKeyboards:
@@ -10,11 +10,12 @@ class BaseKeyboards:
         self.__main_menu_keyboard = None
         self.__back_keyboard = None
 
-    def main_menu_keyboard(self) -> ReplyKeyboardMarkup:
+    def main_menu_keyboard(self) -> InlineKeyboardMarkup:
         if not self.__main_menu_keyboard:
-            menus_button: KeyboardButton = KeyboardButton(text=NoteHandlers.VAULTS_LIST)
-            keyboard: list[list[KeyboardButton]] = [[menus_button]]
-            self.__main_menu_keyboard = ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+            menus_button: InlineKeyboardButton = InlineKeyboardButton(text='Список меню📋',
+                                                                      callback_data=NoteCallbackHandlers.VAULTS_LIST)
+            keyboard: list[list[InlineKeyboardButton]] = [[menus_button]]
+            self.__main_menu_keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard)
 
         return self.__main_menu_keyboard
 

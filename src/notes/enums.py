@@ -2,11 +2,11 @@ from enum import Enum
 
 
 class NoteHandlers(str, Enum):
-    VAULTS_LIST = 'Список меню📋'
     REMOVE_BASE_KEYBOARD = '1'
 
 
 class NoteCallbackHandlers(str, Enum):
+    VAULTS_LIST = 'VAULTS_LIST'
     CREATE_NEW_VAULT = 'CREATE_NEW_VAULT'
     GO_BACK_FROM_CREATE_VAULT = 'GO_BACK_FROM_CREATE_VAULT'
     VAULTS_LIST_PREV_PAGE = 'VAULTS_LIST_PREV_PAGE'

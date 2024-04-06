@@ -12,15 +12,11 @@ class UserService:
     def __init__(self, user_repo: Type[AbstractRepository]):
         self.user_repo = user_repo()
 
-    async def get_or_create_user(self, chat_id: int, user_id: Optional[int] = None) -> User:
+    async def get_or_create_user(self, chat_id: int) -> User:
         try:
-            kwargs = {key: value
-                      for key, value in {'telegram_chat_id': chat_id, 'telegram_user_id': user_id}.items() if
-                      value is not None
-                      }
-            user: User = await self.user_repo.get(**kwargs)
+            user: User = await self.user_repo.get(telegram_chat_id=chat_id)
         except NoResultFound:
-            user: User = User(telegram_chat_id=chat_id, telegram_user_id=user_id)
+            user: User = User(telegram_chat_id=chat_id, telegram_user_id=chat_id)
             async with async_session_maker() as session:
                 session.add(user)
                 await session.commit()

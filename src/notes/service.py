@@ -5,6 +5,7 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from sqlalchemy.exc import NoResultFound
 
 from src.base.keyboards import base_keyboards
+from src.config import settings
 from src.database import async_session_maker
 from src.notes.enums import NoteHandlers, NoteCallbackHandlers
 from src.notes.keyboards import note_keyboard
@@ -23,8 +24,8 @@ class VaultService:
         self.notes_repo = notes_repo()
 
     @staticmethod
-    async def get_all_vaults(chat_id: int, user_id: Optional[int]) -> list[Vault]:
-        user: User = await UserService(UserRepository).get_or_create_user(user_id=user_id, chat_id=chat_id)
+    async def get_all_vaults(chat_id: int) -> list[Vault]:
+        user: User = await UserService(UserRepository).get_or_create_user(chat_id=chat_id)
         async with async_session_maker() as session:
             user = await session.merge(user)
             items = await user.awaitable_attrs.vaults
@@ -33,8 +34,8 @@ class VaultService:
     async def get_rows_count(self):
         return await self.notes_repo.get_count()
 
-    async def create_new_vault(self, user_id: int, chat_id: int, vault_name: str) -> Vault:
-        user: User = await UserService(UserRepository).get_or_create_user(user_id=user_id, chat_id=chat_id)
+    async def create_new_vault(self, chat_id: int, vault_name: str) -> Vault:
+        user: User = await UserService(UserRepository).get_or_create_user(chat_id=chat_id)
         async with async_session_maker() as session:
             user = await session.merge(user)
             user_uuid_id = user.id
@@ -49,26 +50,25 @@ class VaultService:
 
     @staticmethod
     async def list_vaults(message: Message, state: FSMContext,
-                          is_wo_user_id: bool = False,
                           page_number: int = 1,
-                          page_size: int = 10) -> None:
+                          page_size: int = 10,
+                          edit_instead_of_new: bool = True) -> None:
         await state.set_state(NoteStates.list_vaults)
-        remove_kb_message = await message.answer(text=NoteHandlers.REMOVE_BASE_KEYBOARD,
-                                                 reply_markup=ReplyKeyboardRemove())
-        await remove_kb_message.delete()
-        user_id = message.from_user.id if not is_wo_user_id else None
-        vaults = await VaultService(VaultRepository).get_all_vaults(chat_id=message.chat.id, user_id=user_id)
+        vaults = await VaultService(VaultRepository).get_all_vaults(chat_id=message.chat.id)
         vaults = vaults[(page_number * page_size) - page_size: page_number * page_size]
-        await message.answer('Список томов', reply_markup=note_keyboard.vaults_list(vaults, page_number))
+        kwargs = {'text': 'Список томов', 'reply_markup': note_keyboard.vaults_list(vaults, page_number)}
+        if edit_instead_of_new:
+            await message.edit_text(**kwargs)
+        else:
+            await message.answer(**kwargs)
 
     async def delete_vault(self, message: Message, state: FSMContext):
-        user: User = await UserService(UserRepository).get_or_create_user(user_id=message.from_user.id,
-                                                                          chat_id=message.chat.id)
+        user: User = await UserService(UserRepository).get_or_create_user(chat_id=message.chat.id)
         try:
             vault: Vault = await self.notes_repo.get(name=message.text, user_id=user.id)
             await self.notes_repo.delete(vault.id)
             await message.answer(f'Том "{vault.name}" был успешно удалён!')
-            await self.list_vaults(message, state)
+            await self.list_vaults(message, state, edit_instead_of_new=False)
 
         except NoResultFound:
             await message.answer('Тома с таким именем не чуществует!')
