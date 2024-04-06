@@ -1,12 +1,12 @@
 import uuid
+from typing import Optional
+
 from aiogram.filters.callback_data import CallbackData
 
 
-class VaultsListVaultCallback(CallbackData, prefix='vaults_list_vault'):
-    vault_uuid_id: uuid.UUID
+class NotesListNoteCallback(CallbackData, prefix='notes_list_note'):
+    note_uuid_id: uuid.UUID
 
 
-class VaultsListPageCallback(CallbackData, prefix='vaults_list_page'):
-    page: int
-    size: int
-    is_next: bool
+class NotesListGoToParentCallback(CallbackData, prefix='notes_list_go_to_parent_callback'):
+    parent_uuid_id: Optional[uuid.UUID]

@@ -4,7 +4,7 @@ import sys
 
 from src.config import settings
 from src.base.handlers import router as commands_router
-from src.notes.handlers import router as notes_router
+from src.vaults.handlers import router as notes_router
 
 
 async def main() -> None:

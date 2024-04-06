@@ -12,7 +12,7 @@ from src.database import Base
 
 # importing models to create migrations
 from src.user.models import User
-from src.notes.models import Vault, VaultPoint
+from src.vaults.models import Vault, VaultPoint
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
