@@ -8,7 +8,7 @@ from src.vaults.callback_filters import VaultsListVaultCallback, VaultsListPageC
 from src.vaults.enums import VaultsCallbackHandlers
 from src.vaults.repository import VaultRepository
 from src.vaults.service import VaultService
-from src.states import BaseStates, NoteStates
+from src.states import BaseStates, VaultsStates
 
 router = Router()
 
@@ -25,7 +25,7 @@ async def view_vaults_list_callback_query(callback_query: CallbackQuery, state: 
 # Возврат на главную страницу с списка томов
 @router.callback_query(
     F.data == VaultsCallbackHandlers.GO_HOME_FROM_VAULTS_LIST,
-    StateFilter(NoteStates.list_vaults),
+    StateFilter(VaultsStates.list_vaults),
 )
 async def go_home_from_vaults_list_callback_query(callback_query: CallbackQuery, state: FSMContext):
     await state.set_state(BaseStates.start_state)
@@ -37,11 +37,11 @@ async def go_home_from_vaults_list_callback_query(callback_query: CallbackQuery,
 # Создание нового тома
 @router.callback_query(
     F.data == VaultsCallbackHandlers.CREATE_NEW_VAULT,
-    StateFilter(NoteStates.list_vaults),
+    StateFilter(VaultsStates.list_vaults),
 )
 async def create_new_vault_callback_query(callback_query: CallbackQuery,
                                           state: FSMContext):
-    await state.set_state(NoteStates.create_vault)
+    await state.set_state(VaultsStates.create_vault)
     await callback_query.message.edit_text(text='Введите название нового хранилища',
                                            reply_markup=base_keyboards.back_keyboard(
                                                VaultsCallbackHandlers.GO_BACK_FROM_CREATE_VAULT))
@@ -51,11 +51,11 @@ async def create_new_vault_callback_query(callback_query: CallbackQuery,
 # Удаление тома
 @router.callback_query(
     F.data == VaultsCallbackHandlers.DELETE_VAULT,
-    StateFilter(NoteStates.list_vaults),
+    StateFilter(VaultsStates.list_vaults),
 )
 async def delete_vault_callback_query(callback_query: CallbackQuery,
                                       state: FSMContext):
-    await state.set_state(NoteStates.delete_vault)
+    await state.set_state(VaultsStates.delete_vault)
     await callback_query.message.edit_text(text='Введите название хранилища, которое желаете удалить',
                                            reply_markup=base_keyboards.back_keyboard(
                                                VaultsCallbackHandlers.GO_BACK_FROM_DELETE_VAULT))
@@ -65,7 +65,7 @@ async def delete_vault_callback_query(callback_query: CallbackQuery,
 # Возврат назад с удаления или создания нового тома
 @router.callback_query(
     F.data == VaultsCallbackHandlers.GO_BACK_FROM_CREATE_VAULT or F.data == VaultsCallbackHandlers.GO_BACK_FROM_DELETE_VAULT,
-    StateFilter(NoteStates.create_vault, NoteStates.delete_vault),
+    StateFilter(VaultsStates.create_vault, VaultsStates.delete_vault),
 )
 async def go_back_from_create_vault_callback_query(callback_query: CallbackQuery, state: FSMContext):
     await VaultService(VaultRepository).list_vaults(callback_query.message, state)
@@ -75,7 +75,7 @@ async def go_back_from_create_vault_callback_query(callback_query: CallbackQuery
 # Переход по страницам в списке томов
 @router.callback_query(
     VaultsListPageCallback.filter(),
-    StateFilter(NoteStates.list_vaults),
+    StateFilter(VaultsStates.list_vaults),
 )
 async def vaults_list_go_to_specific_page_callback_query(
         callback_query: CallbackQuery,
@@ -105,7 +105,7 @@ async def vaults_list_go_to_specific_page_callback_query(
 # Обработчик нажатия на определённый том в списке томов
 @router.callback_query(
     VaultsListVaultCallback.filter(),
-    StateFilter(NoteStates.list_vaults),
+    StateFilter(VaultsStates.list_vaults),
 )
 async def vaults_list_vault_callback_query(
         callback_query: CallbackQuery,

@@ -12,7 +12,7 @@ from src.vaults.keyboards import note_keyboard
 from src.vaults.models import Vault
 from src.vaults.repository import VaultRepository
 from src.repository import AbstractRepository
-from src.states import NoteStates
+from src.states import VaultsStates
 from src.user.models import User
 from src.user.service import UserService
 from src.user.repository import UserRepository
@@ -22,6 +22,20 @@ class VaultService:
 
     def __init__(self, notes_repo: Type[AbstractRepository]):
         self.notes_repo = notes_repo()
+
+    @staticmethod
+    async def list_vaults(message: Message, state: FSMContext,
+                          page_number: int = 1,
+                          page_size: int = 10,
+                          edit_instead_of_new: bool = True) -> None:
+        await state.set_state(VaultsStates.list_vaults)
+        vaults = await VaultService(VaultRepository).get_all_vaults(chat_id=message.chat.id)
+        vaults = vaults[(page_number * page_size) - page_size: page_number * page_size]
+        kwargs = {'text': 'Список томов', 'reply_markup': note_keyboard.vaults_list(vaults, page_number)}
+        if edit_instead_of_new:
+            await message.edit_text(**kwargs)
+        else:
+            await message.answer(**kwargs)
 
     @staticmethod
     async def get_all_vaults(chat_id: int) -> list[Vault]:
@@ -47,20 +61,6 @@ class VaultService:
             session.add(root_point)
             await session.commit()
             return vault
-
-    @staticmethod
-    async def list_vaults(message: Message, state: FSMContext,
-                          page_number: int = 1,
-                          page_size: int = 10,
-                          edit_instead_of_new: bool = True) -> None:
-        await state.set_state(NoteStates.list_vaults)
-        vaults = await VaultService(VaultRepository).get_all_vaults(chat_id=message.chat.id)
-        vaults = vaults[(page_number * page_size) - page_size: page_number * page_size]
-        kwargs = {'text': 'Список томов', 'reply_markup': note_keyboard.vaults_list(vaults, page_number)}
-        if edit_instead_of_new:
-            await message.edit_text(**kwargs)
-        else:
-            await message.answer(**kwargs)
 
     async def delete_vault(self, message: Message, state: FSMContext):
         user: User = await UserService(UserRepository).get_or_create_user(chat_id=message.chat.id)
