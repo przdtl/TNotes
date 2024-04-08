@@ -1,20 +1,19 @@
 from abc import ABC
-from typing import Optional, Type
+from typing import Type
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from src.list_items.callback_filters import (ItemsListItemClickCallbackFilter, ItemsListRightPageClickCallbackFilter,
                                              ItemsListLeftPageClickCallbackFilter)
+from src.list_items.enums import BaseItemsCallbackData
 
 
 class AbstractItemsListKeyboard(ABC):
     items_list_item_click_callback_filter: Type[ItemsListItemClickCallbackFilter] = None
     items_list_right_page_click_callback_filter: Type[ItemsListRightPageClickCallbackFilter] = None
     items_list_left_page_click_callback_filter: Type[ItemsListLeftPageClickCallbackFilter] = None
-
-    def __init__(self):
-        self.__items_list_interface_keyboard = None
+    base_items_callback_data: Type[BaseItemsCallbackData] = None
 
     def get_full_items_list_kb(self,
                                items: list,
@@ -76,10 +75,8 @@ class AbstractItemsListKeyboard(ABC):
         return InlineKeyboardMarkup(inline_keyboard=[[left_button, right_button]])
 
     def __get_items_list_interface(self):
-        if not self.__items_list_interface_keyboard:
-            create_button = InlineKeyboardButton(text='➕', callback_data=VaultsCallbackHandlers.CREATE_NEW_VAULT)
-            delete_button = InlineKeyboardButton(text='➖', callback_data=VaultsCallbackHandlers.DELETE_VAULT)
-            home_button = InlineKeyboardButton(text='🏠', callback_data=VaultsCallbackHandlers.GO_HOME_FROM_VAULTS_LIST)
-            self.__items_list_interface_keyboard = InlineKeyboardMarkup(
-                inline_keyboard=[[create_button, delete_button, home_button]])
-        return self.__items_list_interface_keyboard
+        create_button = InlineKeyboardButton(text='➕', callback_data=self.base_items_callback_data.CREATE_NEW_ITEM)
+        delete_button = InlineKeyboardButton(text='➖', callback_data=self.base_items_callback_data.DELETE_ITEM)
+        home_button = InlineKeyboardButton(text='🏠',
+                                           callback_data=self.base_items_callback_data.GO_HOME_FROM_LIST_OF_ITEMS)
+        return InlineKeyboardMarkup(inline_keyboard=[[create_button, delete_button, home_button]])

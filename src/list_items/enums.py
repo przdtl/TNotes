@@ -1,30 +1,27 @@
-import enum
-from typing import Optional
+class BaseItemsCallbackDataMeta(type):
+    def __setattr__(cls, name, value):
+        if name in cls.__dict__:
+            raise AttributeError('Cannot reassign members.')
+        super().__setattr__(name, value)
 
 
-class BaseItemsCallbackData:
+class BaseItemsCallbackData(metaclass=BaseItemsCallbackDataMeta):
     __item_name__: str = ''
 
-    CREATE_NEW = 'CREATE_NEW_' + __item_name__
-    LIST_OF = 'LIST_OF_' + __item_name__
-    GO_BACK_FROM_CREATE_ = 'GO_BACK_FROM_CREATE_' + __item_name__
-    GO_HOME_FROM_LIST_OF = 'GO_HOME_FROM_LIST_OF_' + __item_name__
-    DELETE = 'DELETE_' + __item_name__
-    GO_BACK_FROM_DELETE = 'GO_BACK_FROM_DELETE_' + __item_name__
+    CREATE_NEW_ITEM = 'CREATE_NEW'
+    LIST_OF_ITEMS = 'LIST_OF'
+    GO_BACK_FROM_CREATE_ITEM = 'GO_BACK_FROM_CREATE'
+    GO_BACK_FROM_DELETE_ITEM = 'GO_BACK_FROM_DELETE'
+    GO_HOME_FROM_LIST_OF_ITEMS = 'GO_HOME_FROM_LIST_OF'
+    DELETE_ITEM = 'DELETE'
 
+    def __init_subclass__(cls, **kwargs) -> None:
+        if "item_name" not in kwargs:
+            raise ValueError()
+        cls.__item_name__ = kwargs.pop("item_name").upper()
+        for attr in dir(cls):
+            if callable(getattr(cls, attr)) or attr.startswith("__"): continue
+            plural_ending = '' if attr[-1].lower() != 's' else 'S'
+            setattr(cls, attr, getattr(cls, attr) + '_' + cls.__item_name__ + plural_ending)
 
-class VaultsListCallbackData(BaseItemsCallbackData):
-    __item_name__ = 'vault'
-
-    def __init__(self):
-        super().__init__()
-
-    @classmethod
-    def pr(cls):
-        print([func for func in dir(cls) if not callable(getattr(cls, func)) and not func.startswith("__")])
-
-
-print(VaultsListCallbackData.LIST_OF)
-print(VaultsListCallbackData.LIST_OF)
-
-a = VaultsListCallbackData()
+        super().__init_subclass__(**kwargs)
