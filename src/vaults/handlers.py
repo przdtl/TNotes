@@ -4,7 +4,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram import F
 
-from src.vaults.enums import VaultsHandlers
 from src.vaults.repository import VaultRepository
 from src.vaults.service import VaultService
 from src.states import VaultsStates, BaseStates

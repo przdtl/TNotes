@@ -1,10 +1,6 @@
 from enum import Enum
 
 
-class VaultsHandlers(str, Enum):
-    REMOVE_BASE_KEYBOARD = '1'
-
-
 class VaultsCallbackHandlers(str, Enum):
     VAULTS_LIST = 'VAULTS_LIST'
     CREATE_NEW_VAULT = 'CREATE_NEW_VAULT'

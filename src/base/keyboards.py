@@ -1,23 +1,12 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.base.enums import BaseHandlers
-from src.vaults.enums import VaultsHandlers, VaultsCallbackHandlers
 
 
 class BaseKeyboards:
 
     def __init__(self):
-        self.__main_menu_keyboard = None
         self.__back_keyboard = None
-
-    def main_menu_keyboard(self) -> InlineKeyboardMarkup:
-        if not self.__main_menu_keyboard:
-            menus_button: InlineKeyboardButton = InlineKeyboardButton(text='Список меню📋',
-                                                                      callback_data=VaultsCallbackHandlers.VAULTS_LIST)
-            keyboard: list[list[InlineKeyboardButton]] = [[menus_button]]
-            self.__main_menu_keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard)
-
-        return self.__main_menu_keyboard
 
     def back_keyboard(self, callback_data: str) -> InlineKeyboardMarkup:
         if not self.__back_keyboard:

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from sqlalchemy import select, insert, func
+from sqlalchemy import select, insert
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 
 from src.database import async_session_maker
@@ -8,65 +8,82 @@ from src.database import async_session_maker
 class AbstractRepository(ABC):
     model = None
 
+    @classmethod
     @abstractmethod
-    async def get(self, **kwargs):
+    async def get(cls, **kwargs):
         raise NotImplementedError
 
-    async def get_all(self, **kwargs):
+    @classmethod
+    @abstractmethod
+    async def get_all(cls, **kwargs):
         raise NotImplementedError
 
-    async def get_related_objects(self, object_id, name_of_relative):
+    @classmethod
+    @abstractmethod
+    async def get_related_objects(cls, object_id, name_of_relative):
         raise NotImplementedError
 
-    async def get_count(self, **kwargs):
+    @classmethod
+    @abstractmethod
+    async def get_count(cls, **kwargs):
         raise NotImplementedError
 
-    async def insert(self, **data):
+    @classmethod
+    @abstractmethod
+    async def insert(cls, **data):
         raise NotImplementedError
 
-    async def update(self, pk, **data):
+    @classmethod
+    @abstractmethod
+    async def update(cls, pk, **data):
         raise NotImplementedError
 
-    async def delete(self, pk):
+    @classmethod
+    @abstractmethod
+    async def delete(cls, pk):
         raise NotImplementedError
 
 
 class SQLAlchemyRepository(AbstractRepository):
-
-    async def get(self, **kwargs):
-        result = await self.get_all(**kwargs)
-        result = result.all()
+    @classmethod
+    async def get(cls, **kwargs):
+        result = await cls.get_all(**kwargs)
         if not result:
             raise NoResultFound
         if len(result) > 1:
             raise MultipleResultsFound
         return result[0]
 
-    async def get_all(self, **kwargs):
+    @classmethod
+    async def get_all(cls, **kwargs):
         async with async_session_maker() as session:
-            result = await session.scalars(select(self.model).filter_by(**kwargs).order_by(self.model.id))
-            return result
+            result = await session.scalars(select(cls.model).filter_by(**kwargs).order_by(cls.model.id))
+            return result.all()
 
-    async def get_related_objects(self, object_id, name_of_relative):
+    @classmethod
+    async def get_related_objects(cls, object_id, name_of_relative):
         async with async_session_maker() as session:
-            model_item = await session.get(self.model, object_id)
+            model_item = await session.get(cls.model, object_id)
             items = await getattr(getattr(model_item, 'awaitable_attrs'), name_of_relative)
             return items
 
-    async def get_count(self, **kwargs):
+    @classmethod
+    async def get_count(cls, **kwargs):
         async with async_session_maker() as session:
-            return len((await session.scalars(select(self.model).filter_by(**kwargs))).all())
+            return len((await session.scalars(select(cls.model).filter_by(**kwargs))).all())
 
-    async def insert(self, **data):
+    @classmethod
+    async def insert(cls, **data):
         async with async_session_maker() as session:
-            stmt = insert(self.model).values(**data).returning(self.model)
+            stmt = insert(cls.model).values(**data).returning(cls.model)
             result = await session.execute(stmt)
             await session.commit()
             return result.scalar_one()
 
-    async def update(self, pk, **data):
+    @classmethod
+    async def update(cls, pk, **data):
         async with async_session_maker() as session:
-            stmt = await session.get(self.model, pk)
+            stmt = await session.get(cls.model, pk)
 
             if not stmt:
                 raise NoResultFound
@@ -76,9 +93,10 @@ class SQLAlchemyRepository(AbstractRepository):
             await session.commit()
             return stmt
 
-    async def delete(self, pk):
+    @classmethod
+    async def delete(cls, pk):
         async with async_session_maker() as session:
-            stmt = await session.get(self.model, pk)
+            stmt = await session.get(cls.model, pk)
 
             if not stmt:
                 raise NoResultFound

@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Type
+from typing import Type, Optional
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -15,31 +15,27 @@ class AbstractItemsListKeyboard(ABC):
     items_list_left_page_click_callback_filter: Type[ItemsListLeftPageClickCallbackFilter] = None
     base_items_callback_data: Type[BaseItemsCallbackData] = None
 
-    def get_full_items_list_kb(self,
+    @classmethod
+    def get_full_items_list_kb(cls,
                                items: list,
                                page: int,
                                items_width: int = 2,
-                               kb_before_items_list: list[list[InlineKeyboardButton]] = None,
-                               kb_after_items_list_and_before_interface: list[list[InlineKeyboardButton]] = None,
-                               kb_after_interface: list[list[InlineKeyboardButton]] = None,
-                               ):
-        kb_before_items_list = [[]] if not kb_before_items_list else kb_before_items_list
-        kb_after_items_list_and_before_interface = [
-            []] if not kb_after_items_list_and_before_interface else kb_after_items_list_and_before_interface
-        kb_after_interface = [[]] if not kb_after_interface else kb_after_interface
+                               ) -> InlineKeyboardMarkup:
         builder = InlineKeyboardBuilder()
-        builder.attach(InlineKeyboardBuilder.from_markup(self.__get_kb_before_items_list(kb_before_items_list)))
-        builder.attach(InlineKeyboardBuilder.from_markup(self.__items_list(items, page, items_width)))
+        builder.attach(InlineKeyboardBuilder.from_markup(cls._get_kb_before_items_list(items=items)))
+        builder.attach(InlineKeyboardBuilder.from_markup(cls.__items_list(items, page, items_width)))
         builder.attach(InlineKeyboardBuilder.from_markup(
-            self.__get_kb_after_items_list_and_before_interface(kb_after_items_list_and_before_interface)))
-        builder.attach(InlineKeyboardBuilder.from_markup(self.__get_items_list_interface()))
-        builder.attach(InlineKeyboardBuilder.from_markup(self.__get_kb_after_interface(kb_after_interface)))
+            cls._get_kb_after_items_list_and_before_interface(items=items)))
+        builder.attach(InlineKeyboardBuilder.from_markup(cls.__get_items_list_interface()))
+        builder.attach(InlineKeyboardBuilder.from_markup(cls._get_kb_after_interface(items=items)))
+        return builder.as_markup()
 
-    def __items_list(self, items: list, page: int, items_width: int) -> InlineKeyboardMarkup:
+    @classmethod
+    def __items_list(cls, items: list, page: int, items_width: int) -> InlineKeyboardMarkup:
         builder = InlineKeyboardBuilder()
         keyboard: list[InlineKeyboardButton] = [
             InlineKeyboardButton(text=item.name,
-                                 callback_data=self.items_list_item_click_callback_filter(item_uuid_id=item.id).pack())
+                                 callback_data=cls.items_list_item_click_callback_filter(item_uuid_id=item.id).pack())
             for item in items
         ]
         builder.row(
@@ -48,35 +44,39 @@ class AbstractItemsListKeyboard(ABC):
         )
         items_markup = InlineKeyboardMarkup(inline_keyboard=[])
         builder.attach(InlineKeyboardBuilder.from_markup(items_markup))
-        builder.attach(InlineKeyboardBuilder.from_markup(self.__get_page_buttons(current_page=page)))
+        builder.attach(InlineKeyboardBuilder.from_markup(cls.__get_page_buttons(current_page=page)))
         return builder.as_markup()
 
     @classmethod
-    def __get_kb_before_items_list(cls, keyboard: list[list[InlineKeyboardButton]]) -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup(inline_keyboard=keyboard)
+    def _get_kb_before_items_list(cls, items: list,
+                                  keyboard: Optional[list[list[InlineKeyboardButton]]] = None) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(inline_keyboard=keyboard if keyboard else [[InlineKeyboardButton]])
 
     @classmethod
-    def __get_kb_after_items_list_and_before_interface(cls,
-                                                       keyboard: list[list[InlineKeyboardButton]]
-                                                       ) -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup(inline_keyboard=keyboard)
+    def _get_kb_after_items_list_and_before_interface(cls, items: list,
+                                                      keyboard: Optional[list[list[InlineKeyboardButton]]] = None
+                                                      ) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(inline_keyboard=keyboard if keyboard else [[InlineKeyboardButton]])
 
     @classmethod
-    def __get_kb_after_interface(cls, keyboard: list[list[InlineKeyboardButton]]) -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup(inline_keyboard=keyboard)
+    def _get_kb_after_interface(cls, items: list,
+                                keyboard: Optional[list[list[InlineKeyboardButton]]] = None) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(inline_keyboard=keyboard if keyboard else [[InlineKeyboardButton]])
 
-    def __get_page_buttons(self, current_page: int):
+    @classmethod
+    def __get_page_buttons(cls, current_page: int):
         left_button = InlineKeyboardButton(text='⬅️',
-                                           callback_data=self.items_list_left_page_click_callback_filter(size=10,
-                                                                                                         page=current_page).pack())
+                                           callback_data=cls.items_list_left_page_click_callback_filter(size=10,
+                                                                                                        page=current_page).pack())
         right_button = InlineKeyboardButton(text='➡️',
-                                            callback_data=self.items_list_right_page_click_callback_filter(size=10,
-                                                                                                           page=current_page).pack())
+                                            callback_data=cls.items_list_right_page_click_callback_filter(size=10,
+                                                                                                          page=current_page).pack())
         return InlineKeyboardMarkup(inline_keyboard=[[left_button, right_button]])
 
-    def __get_items_list_interface(self):
-        create_button = InlineKeyboardButton(text='➕', callback_data=self.base_items_callback_data.CREATE_NEW_ITEM)
-        delete_button = InlineKeyboardButton(text='➖', callback_data=self.base_items_callback_data.DELETE_ITEM)
+    @classmethod
+    def __get_items_list_interface(cls):
+        create_button = InlineKeyboardButton(text='➕', callback_data=cls.base_items_callback_data.CREATE_NEW_ITEM)
+        delete_button = InlineKeyboardButton(text='➖', callback_data=cls.base_items_callback_data.DELETE_ITEM)
         home_button = InlineKeyboardButton(text='🏠',
-                                           callback_data=self.base_items_callback_data.GO_HOME_FROM_LIST_OF_ITEMS)
+                                           callback_data=cls.base_items_callback_data.GO_HOME_FROM_LIST_OF_ITEMS)
         return InlineKeyboardMarkup(inline_keyboard=[[create_button, delete_button, home_button]])
